@@ -3,7 +3,7 @@
 > Developed by **Ahmed Medhat** & **Lucas Monir**
 
 <div align="center">
-  <img src="./public/eetp-ai-generated-logo.png" alt="EETP Logo" width="300" />
+  <img src="./public/eetp-ai-generated-logo.png" alt="EETP Logo" width="500" />
 </div>
 
 ---
