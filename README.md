@@ -31,7 +31,9 @@ The entire backend architecture exists to solve this one problem. Everything els
 ---
 
 ## System Architecture
-
+## EETP - System Architecture
+![EETP - System Architecture](./public/system-design/eetp-system-architecture.png)
+*EETP - System Architecture*
 
 ---
 
