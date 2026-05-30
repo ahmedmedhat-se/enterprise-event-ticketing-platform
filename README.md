@@ -1,4 +1,4 @@
-# Enterprise Event Ticketing Platform
+# Enterprise Event Ticketing Platform (EETP)
 
 > Developed by **Ahmed Medhat** & **Lucas Monir**
 
@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-**Enterprise Event Ticketing Platform** is a production-grade, full-stack event ticketing platform engineered to handle high-concurrency seat selection under extreme load. Think of it as a mini Ticketmaster — event organizers publish events with custom seating maps and pricing tiers, fans browse and purchase tickets, and the platform handles the hard engineering problem: thousands of users targeting the same seat at the same second.
+**Enterprise Event Ticketing Platform (EETP)** is a production-grade, full-stack event ticketing platform engineered to handle high-concurrency seat selection under extreme load. Think of it as a mini Ticketmaster — event organizers publish events with custom seating maps and pricing tiers, fans browse and purchase tickets, and the platform handles the hard engineering problem: thousands of users targeting the same seat at the same second.
 
 The core architecture is built around **distributed Redis locking**, **time-bounded seat reservations**, and an **event-driven async pipeline** — ensuring zero double-bookings, instant payment confirmation, and real-time seat map updates across all connected clients.
 
@@ -16,63 +16,22 @@ The core architecture is built around **distributed Redis locking**, **time-boun
 
 ---
 
+# Application System Design
+
 ## The Hard Problem
 Picture this: a famous band announces a concert. Tickets go on sale at 8PM. At exactly 8PM, 10,000 people hit the booking page simultaneously. There are only 500 seats.
 Built wrong, two people book the same seat. Someone pays and gets told the seat is gone. The site crashes.
 The entire backend architecture exists to solve this one problem. Everything else is standard CRUD.
 
 **Solution:**
-```
-Fan clicks seat
-      ↓
-Redis SET NX Lock — atomic, first writer wins, loser rejected instantly
-      ↓
-PostgreSQL — seat status updated to "held"
-      ↓
-10-minute countdown begins
-      ↓
-Fan pays → Payment Gateway
-      ↓
-Webhook hits server → signature verified
-      ↓
-Seats atomically flipped to "booked" in PostgreSQL
-      ↓
-Event published to BullMQ
-      ↓
-┌─────────────┬──────────────┬────────────────┬──────────────────┐
-Generate QR   Send Email   Update Cache    Waitlist Check
-```
+## EETP - Booking Flow Architect
+![EETP - Booking Flow Architect](./public/system-design/eetp-booking-flow.png)
+*EETP - Booking Flow Architect*
 
 ---
 
 ## System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                          CLIENT LAYER                           │
-│              React + TypeScript + Tailwind CSS                  │
-│          Axios (HTTP) │ Socket.io Client (WebSocket)            │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│                         API GATEWAY                             │
-│              NestJS — RESTful + WebSocket (Socket.io)           │
-│           JWT Auth │ Guards │ Interceptors │ Pipes              │
-└───────┬───────────────────────────────────────────┬────────────┘
-        │                                           │
-┌───────▼────────┐                       ┌──────────▼──────────┐
-│   PostgreSQL   │                       │        Redis        │
-│  (Drizzle ORM) │                       │  Seat Locks (NX)    │
-│  Source of     │                       │  10-min Holds TTL   │
-│  Truth         │                       │  Event Cache        │
-└────────────────┘                       └─────────────────────┘
-        │
-┌───────▼────────────────────────────────────────────────────────┐
-│                        BullMQ (Redis)                          │
-│   QR Generation │ Email Dispatch │ Cache Invalidation          │
-│   Sold-out Check │ Waitlist Trigger │ PDF Ticket               │
-└────────────────────────────────────────────────────────────────┘
-```
 
 ---
 
