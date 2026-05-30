@@ -84,7 +84,7 @@ The entire backend architecture exists to solve this one problem. Everything els
 ## Project Structure
 
 ### Root
-```
+```js
 enterprise-event-ticketing-platform/
 ├── client/
 ├── server/
@@ -95,7 +95,7 @@ enterprise-event-ticketing-platform/
 ```
 
 ### Backend (NestJS + TypeScript)
-```
+```js
 server/
 ├── src/
 │   ├── app/
@@ -210,7 +210,7 @@ server/
 ```
 
 ### Frontend (React + TypeScript)
-```
+```js
 client/
 ├── public/
 ├── src/
@@ -294,7 +294,7 @@ client/
 ```
 
 ### Database
-```
+```js
 database/
 └── schema.sql
 ```
