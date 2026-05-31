@@ -404,15 +404,9 @@ DELETE /admin/users/:id            — Remove user
 ```
 
 ### WebSocket Events
-```
-Client → Server:
-  join:event     { eventId }        — Subscribe to seat map updates
-  leave:event    { eventId }        — Unsubscribe
-
-Server → Client:
-  seat:updated   { seatId, status } — Seat status changed
-  event:soldout  { eventId }        — Event just sold out
-```
+## WebSocket Events - Client/Server
+![WebSocket Events - Client/Server](./public/system-design/websocket-events-client-server.png)
+*WebSocket Events - Client/Server*
 
 ---
 
