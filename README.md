@@ -94,119 +94,34 @@ enterprise-event-ticketing-platform/
 └── README.md
 ```
 
-### Backend (NestJS + TypeScript)
+### Backend (NestJS + PostgreSQL)
 ```js
 server/
-├── src/
-│   ├── app/
-│   │   ├── auth/
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── auth.service.ts
-│   │   │   ├── auth.module.ts
-│   │   │   ├── guards/
-│   │   │   │   ├── jwt-auth.guard.ts
-│   │   │   │   └── roles.guard.ts
-│   │   │   ├── strategies/
-│   │   │   │   └── jwt.strategy.ts
-│   │   │   └── decorators/
-│   │   │       └── roles.decorator.ts
-│   │   ├── events/
-│   │   │   ├── events.controller.ts
-│   │   │   ├── events.service.ts
-│   │   │   ├── events.module.ts
-│   │   │   └── dto/
-│   │   │       ├── create-event.dto.ts
-│   │   │       └── update-event.dto.ts
-│   │   ├── seats/
-│   │   │   ├── seats.controller.ts
-│   │   │   ├── seats.service.ts
-│   │   │   ├── seats.module.ts
-│   │   │   └── dto/
-│   │   │       └── hold-seat.dto.ts
-│   │   ├── bookings/
-│   │   │   ├── bookings.controller.ts
-│   │   │   ├── bookings.service.ts
-│   │   │   ├── bookings.module.ts
-│   │   │   └── dto/
-│   │   │       └── create-booking.dto.ts
-│   │   ├── tickets/
-│   │   │   ├── tickets.controller.ts
-│   │   │   ├── tickets.service.ts
-│   │   │   └── tickets.module.ts
-│   │   ├── payments/
-│   │   │   ├── payments.controller.ts
-│   │   │   ├── payments.service.ts
-│   │   │   ├── payments.module.ts
-│   │   │   └── webhooks/
-│   │   │       └── payment-webhook.handler.ts
-│   │   ├── waitlist/
-│   │   │   ├── waitlist.controller.ts
-│   │   │   ├── waitlist.service.ts
-│   │   │   └── waitlist.module.ts
-│   │   ├── organizers/
-│   │   │   ├── organizers.controller.ts
-│   │   │   ├── organizers.service.ts
-│   │   │   └── organizers.module.ts
-│   │   ├── admin/
-│   │   │   ├── admin.controller.ts
-│   │   │   ├── admin.service.ts
-│   │   │   └── admin.module.ts
-│   │   └── checkin/
-│   │       ├── checkin.controller.ts
-│   │       ├── checkin.service.ts
-│   │       └── checkin.module.ts
-│   ├── common/
-│   │   ├── middlewares/
-│   │   │   └── logger.middleware.ts
-│   │   ├── filters/
-│   │   │   └── http-exception.filter.ts
-│   │   ├── interceptors/
-│   │   │   └── response.interceptor.ts
-│   │   ├── pipes/
-│   │   │   └── validation.pipe.ts
-│   │   └── enums/
-│   │       ├── event-status.enum.ts
-│   │       ├── seat-status.enum.ts
-│   │       └── user-role.enum.ts
-│   ├── config/
-│   │   ├── database.config.ts
-│   │   ├── redis.config.ts
-│   │   └── jwt.config.ts
-│   ├── database/
-│   │   ├── schema/
-│   │   │   ├── users.schema.ts
-│   │   │   ├── events.schema.ts
-│   │   │   ├── seats.schema.ts
-│   │   │   ├── bookings.schema.ts
-│   │   │   ├── tickets.schema.ts
-│   │   │   └── waitlist.schema.ts
-│   │   ├── migrations/
-│   │   └── drizzle.ts
-│   ├── gateways/
-│   │   └── seat-map.gateway.ts
-│   ├── jobs/
-│   │   ├── processors/
-│   │   │   ├── ticket-generation.processor.ts
-│   │   │   ├── email-dispatch.processor.ts
-│   │   │   ├── seat-release.processor.ts
-│   │   │   └── waitlist-notify.processor.ts
-│   │   └── queues/
-│   │       └── booking.queue.ts
-│   ├── utils/
-│   │   ├── qr.util.ts
-│   │   ├── pdf.util.ts
-│   │   └── jwt-ticket.util.ts
-│   └── app.module.ts
-├── test/
-├── .env
-├── .env.example
-├── .gitignore
-├── nest-cli.json
-├── tsconfig.json
-├── tsconfig.build.json
-├── drizzle.config.ts
-├── package.json
-└── Dockerfile
+├── database/
+│   └── schema.sql
+│
+└── backend/
+    ├── src/
+    │   ├── database/
+    │   │   ├── database.module.ts
+    │   │   └── schema.ts
+    │   ├── app.controller.ts
+    │   ├── app.module.ts
+    │   ├── app.service.ts
+    │   └── main.ts
+    │
+    ├── test/
+    ├── .env.example
+    ├── .gitignore
+    ├── .prettierrc
+    ├── drizzle.config.ts
+    ├── eslint.config.mjs
+    ├── nest-cli.json
+    ├── package-lock.json
+    ├── package.json
+    ├── README.md
+    ├── tsconfig.build.json
+    └── tsconfig.json
 ```
 
 ### Frontend (React + TypeScript)
@@ -291,12 +206,6 @@ client/
 ├── tsconfig.json
 ├── package.json
 └── Dockerfile
-```
-
-### Database
-```js
-database/
-└── schema.sql
 ```
 
 ---
