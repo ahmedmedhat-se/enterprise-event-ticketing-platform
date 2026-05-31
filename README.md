@@ -207,24 +207,9 @@ client/
 ---
 
 ## Database Design (ERD Overview)
-
-### Core Tables
-**users** — `id`, `name`, `email`, `password_hash`, `role` (fan | organizer | admin), `created_at`
-
-**events** — `id`, `organizer_id`, `title`, `description`, `venue`, `city`, `category`, `date`, `banner_url`, `type` (seated | general_admission), `capacity`, `status` (draft | published | on_sale | sold_out | completed | cancelled), `refund_policy`, `created_at`
-
-**pricing_tiers** — `id`, `event_id`, `name`, `price`, `early_bird_expires_at`
-
-**seats** — `id`, `event_id`, `tier_id`, `row`, `number`, `status` (available | held | booked), `created_at`
-> ⚠️ `status` is the most critical field in the system — all locking logic protects this column.
-
-**bookings** — `id`, `fan_id`, `event_id`, `total_amount`, `platform_fee`, `status` (pending | confirmed | cancelled), `created_at`
-
-**booking_seats** — `id`, `booking_id`, `seat_id`
-
-**tickets** — `id`, `booking_id`, `seat_id`, `fan_id`, `qr_payload` (signed JWT), `checked_in`, `checked_in_at`, `pdf_url`
-
-**waitlist** — `id`, `fan_id`, `event_id`, `position`, `notified_at`, `window_expires_at`, `created_at`
+## EETP - Database ERD
+![EETP - Database ERD](./public/db/eetp-database-erd.png)
+*EETP - Database ERD*
 
 ---
 
