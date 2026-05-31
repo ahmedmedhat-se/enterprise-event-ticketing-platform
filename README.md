@@ -97,31 +97,27 @@ enterprise-event-ticketing-platform/
 ### Backend (NestJS + PostgreSQL)
 ```js
 server/
-├── database/
-│   └── schema.sql
+├── src/
+│   ├── database/
+│   │   ├── database.module.ts
+│   │   └── schema.ts
+│   ├── app.controller.ts
+│   ├── app.module.ts
+│   ├── app.service.ts
+│   └── main.ts
 │
-└── backend/
-    ├── src/
-    │   ├── database/
-    │   │   ├── database.module.ts
-    │   │   └── schema.ts
-    │   ├── app.controller.ts
-    │   ├── app.module.ts
-    │   ├── app.service.ts
-    │   └── main.ts
-    │
-    ├── test/
-    ├── .env.example
-    ├── .gitignore
-    ├── .prettierrc
-    ├── drizzle.config.ts
-    ├── eslint.config.mjs
-    ├── nest-cli.json
-    ├── package-lock.json
-    ├── package.json
-    ├── README.md
-    ├── tsconfig.build.json
-    └── tsconfig.json
+├── test/
+├── .env.example
+├── .gitignore
+├── .prettierrc
+├── drizzle.config.ts
+├── eslint.config.mjs
+├── nest-cli.json
+├── package-lock.json
+├── package.json
+├── README.md
+├── tsconfig.build.json
+└── tsconfig.json
 ```
 
 ### Frontend (React + TypeScript)
