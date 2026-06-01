@@ -88,3 +88,20 @@ export const seats = pgTable(
     unq: unique().on(table.eventId, table.seatRow, table.seatNumber),
   }),
 );
+
+// ==================== BOOKINGS ====================
+export const bookings = pgTable('bookings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  eventId: uuid('event_id')
+    .references(() => events.id)
+    .notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // 'pending','confirmed','cancelled','refunded'
+  paymentId: varchar('payment_id', { length: 255 }), // internal payment reference
+  serviceFee: decimal('service_fee', { precision: 10, scale: 2 }),
+  ticketsPrice: decimal('tickets_price', { precision: 10, scale: 2 }),
+  grandTotal: decimal('grand_total', { precision: 10, scale: 2 }),
+  createdAt: timestamp('created_at').defaultNow(),
+});
