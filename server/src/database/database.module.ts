@@ -1,7 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from './schema';
 
 @Global()
@@ -11,13 +11,12 @@ import * as schema from './schema';
       provide: 'DRIZZLE_DB',
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const pool = new Pool({
-          connectionString: configService.get<string>('DATABASE_URL'),
+        const Pool = postgres(configService.get<string>('DATABASE_URL'), {
           max: 50,
           idle_timeout: 10,
           connect_timeout: 10,
         });
-        return drizzle(pool, { schema });
+        return drizzle(Pool, { schema });
       },
     },
   ],
