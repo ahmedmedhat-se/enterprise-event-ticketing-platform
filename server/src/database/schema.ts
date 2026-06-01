@@ -8,7 +8,46 @@ import {
   text,
   boolean,
   unique,
+  pgEnum,
 } from 'drizzle-orm/pg-core';
+
+export const userRoleEnum = pgEnum('user_role', ['fan', 'organizer', 'admin']);
+export const approvalStatusEnum = pgEnum('approval_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
+export const eventTypeEnum = pgEnum('event_type', [
+  'seated',
+  'general_admission',
+]);
+export const seatStatusEnum = pgEnum('seat_status', [
+  'available',
+  'held',
+  'booked',
+]);
+export const bookingStatusEnum = pgEnum('booking_status', [
+  'pending',
+  'confirmed',
+  'cancelled',
+  'refunded',
+]);
+export const waitlistStatusEnum = pgEnum('waitlist_status', [
+  'waiting',
+  'offered',
+  'expired',
+  'converted',
+]);
+export const ticketStatusEnum = pgEnum('ticket_status', [
+  'valid',
+  'cancelled',
+  'checked_in',
+]);
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'succeeded',
+  'failed',
+  'refunded',
+]);
 
 // ==================== USERS ====================
 export const users = pgTable('users', {
@@ -16,7 +55,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }).notNull(),
   phone: varchar('phone', { length: 50 }),
   email: varchar('email', { length: 255 }).unique().notNull(),
-  role: varchar('role', { length: 20 }).notNull().default('fan'), // 'fan','organizer','admin'
+  role: userRoleEnum('role').notNull().default('fan'),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   deletedAt: timestamp('deleted_at'),
@@ -32,7 +71,7 @@ export const organizerAccounts = pgTable('organizer_accounts', {
     length: 100,
   }),
   taxId: varchar('tax_id', { length: 100 }),
-  approvalStatus: varchar('approval_status', { length: 20 }).default('pending'), // 'pending','approved','rejected'
+  approvalStatus: approvalStatusEnum('approval_status').default('pending'),
   approvedAt: timestamp('approved_at'),
 });
 
@@ -46,7 +85,7 @@ export const events = pgTable('events', {
   description: text('description'),
   city: varchar('city', { length: 100 }),
   country: varchar('country', { length: 100 }),
-  eventType: varchar('event_type', { length: 20 }).notNull(), // 'seated','general_admission'
+  eventType: eventTypeEnum('event_type').notNull(),
   salesStartAt: timestamp('sales_start_at').notNull(),
   salesEndAt: timestamp('sales_end_at'),
   totalSeats: integer('total_seats'), // for seated events (stored for quick display)
@@ -82,7 +121,7 @@ export const seats = pgTable(
       .notNull(),
     seatRow: varchar('seat_row', { length: 10 }).notNull(),
     seatNumber: integer('seat_number').notNull(),
-    status: varchar('status', { length: 20 }).notNull().default('available'), // 'available','held','booked'
+    status: seatStatusEnum('status').notNull().default('available'),
   },
   (table) => ({
     unq: unique().on(table.eventId, table.seatRow, table.seatNumber),
@@ -98,7 +137,7 @@ export const bookings = pgTable('bookings', {
   eventId: uuid('event_id')
     .references(() => events.id)
     .notNull(),
-  status: varchar('status', { length: 20 }).notNull().default('pending'), // 'pending','confirmed','cancelled','refunded'
+  status: bookingStatusEnum('status').notNull().default('pending'),
   paymentId: varchar('payment_id', { length: 255 }), // internal payment reference
   serviceFee: decimal('service_fee', { precision: 10, scale: 2 }),
   ticketsPrice: decimal('tickets_price', { precision: 10, scale: 2 }),
@@ -115,7 +154,7 @@ export const waitlist = pgTable('waitlist', {
   userId: uuid('user_id')
     .references(() => users.id)
     .notNull(),
-  status: varchar('status', { length: 20 }).default('waiting'), // 'waiting','offered','expired','converted'
+  status: waitlistStatusEnum('status').default('waiting'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -134,7 +173,7 @@ export const tickets = pgTable('tickets', {
   eventId: uuid('event_id')
     .references(() => events.id)
     .notNull(),
-  status: varchar('status', { length: 20 }).notNull().default('valid'), // 'valid','cancelled','checked_in'
+  status: ticketStatusEnum('status').notNull().default('valid'),
   qrCodePayload: text('qr_code_payload').notNull(),
   checkedIn: boolean('checked_in').default(false),
   checkInAt: timestamp('check_in_at'),
@@ -148,7 +187,7 @@ export const paymentTransactions = pgTable('payment_transactions', {
     .notNull(),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
   currency: varchar('currency', { length: 3 }).default('USD'),
-  status: varchar('status', { length: 20 }).notNull(), // e.g., 'succeeded','failed','refunded'
+  status: paymentStatusEnum('status').notNull(),
   gateway: varchar('gateway', { length: 30 }).notNull(),
   gatewayTransactionId: varchar('gateway_transaction_id', { length: 255 }),
   processedAt: timestamp('processed_at').defaultNow(),
