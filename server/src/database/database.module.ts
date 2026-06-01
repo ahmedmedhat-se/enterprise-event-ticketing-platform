@@ -13,6 +13,9 @@ import * as schema from './schema';
       useFactory: (configService: ConfigService) => {
         const pool = new Pool({
           connectionString: configService.get<string>('DATABASE_URL'),
+          max: 50,
+          idle_timeout: 10,
+          connect_timeout: 10,
         });
         return drizzle(pool, { schema });
       },

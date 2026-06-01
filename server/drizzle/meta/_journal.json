@@ -8,6 +8,13 @@
       "when": 1780273618125,
       "tag": "0000_free_nightshade",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780316130589,
+      "tag": "0001_wandering_tag",
+      "breakpoints": true
     }
   ]
 }
