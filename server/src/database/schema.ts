@@ -139,3 +139,17 @@ export const tickets = pgTable('tickets', {
   checkedIn: boolean('checked_in').default(false),
   checkInAt: timestamp('check_in_at'),
 });
+
+// ==================== PAYMENT TRANSACTIONS ====================
+export const paymentTransactions = pgTable('payment_transactions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  bookingId: uuid('booking_id')
+    .references(() => bookings.id)
+    .notNull(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: varchar('currency', { length: 3 }).default('USD'),
+  status: varchar('status', { length: 20 }).notNull(), // e.g., 'succeeded','failed','refunded'
+  gateway: varchar('gateway', { length: 30 }).notNull(),
+  gatewayTransactionId: varchar('gateway_transaction_id', { length: 255 }),
+  processedAt: timestamp('processed_at').defaultNow(),
+});
