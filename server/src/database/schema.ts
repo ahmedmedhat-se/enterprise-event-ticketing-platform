@@ -35,3 +35,22 @@ export const organizerAccounts = pgTable('organizer_accounts', {
   approvalStatus: varchar('approval_status', { length: 20 }).default('pending'), // 'pending','approved','rejected'
   approvedAt: timestamp('approved_at'),
 });
+
+// ==================== EVENTS ====================
+export const events = pgTable('events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizerId: uuid('organizer_id')
+    .references(() => users.id)
+    .notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  city: varchar('city', { length: 100 }),
+  country: varchar('country', { length: 100 }),
+  eventType: varchar('event_type', { length: 20 }).notNull(), // 'seated','general_admission'
+  salesStartAt: timestamp('sales_start_at').notNull(),
+  salesEndAt: timestamp('sales_end_at'),
+  totalSeats: integer('total_seats'), // for seated events (stored for quick display)
+  totalCapacity: integer('total_capacity'), // for general admission
+  date: timestamp('date').notNull(), // event start date
+  createdAt: timestamp('created_at').defaultNow(),
+});
