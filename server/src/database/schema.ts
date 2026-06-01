@@ -54,3 +54,37 @@ export const events = pgTable('events', {
   date: timestamp('date').notNull(), // event start date
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// ==================== PRICING TIERS ====================
+export const pricingTiers = pgTable('pricing_tiers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  eventId: uuid('event_id')
+    .references(() => events.id)
+    .notNull(),
+  tierName: varchar('tier_name', { length: 100 }).notNull(),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  seatsCount: integer('seats_count').notNull(),
+  earlyBirdPrice: decimal('early_bird_price', { precision: 10, scale: 2 }),
+  earlyBirdExpiration: timestamp('early_bird_expiration'),
+  maxPerOrder: integer('max_per_order'),
+});
+
+// ==================== SEATS (seated events) ====================
+export const seats = pgTable(
+  'seats',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    eventId: uuid('event_id')
+      .references(() => events.id)
+      .notNull(),
+    tierId: uuid('tier_id')
+      .references(() => pricingTiers.id)
+      .notNull(),
+    seatRow: varchar('seat_row', { length: 10 }).notNull(),
+    seatNumber: integer('seat_number').notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('available'), // 'available','held','booked'
+  },
+  (table) => ({
+    unq: unique().on(table.eventId, table.seatRow, table.seatNumber),
+  }),
+);
