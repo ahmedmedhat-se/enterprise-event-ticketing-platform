@@ -105,3 +105,16 @@ export const bookings = pgTable('bookings', {
   grandTotal: decimal('grand_total', { precision: 10, scale: 2 }),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// ==================== WAITLIST ====================
+export const waitlist = pgTable('waitlist', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  eventId: uuid('event_id')
+    .references(() => events.id)
+    .notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  status: varchar('status', { length: 20 }).default('waiting'), // 'waiting','offered','expired','converted'
+  createdAt: timestamp('created_at').defaultNow(),
+});
