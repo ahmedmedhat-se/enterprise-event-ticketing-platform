@@ -118,3 +118,24 @@ export const waitlist = pgTable('waitlist', {
   status: varchar('status', { length: 20 }).default('waiting'), // 'waiting','offered','expired','converted'
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// ==================== TICKETS ====================
+export const tickets = pgTable('tickets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  ticketNumber: varchar('ticket_number', { length: 30 }).unique().notNull(),
+  bookingId: uuid('booking_id')
+    .references(() => bookings.id)
+    .notNull(),
+
+  seatId: uuid('seat_id').references(() => seats.id), // null for general admission
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  eventId: uuid('event_id')
+    .references(() => events.id)
+    .notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('valid'), // 'valid','cancelled','checked_in'
+  qrCodePayload: text('qr_code_payload').notNull(),
+  checkedIn: boolean('checked_in').default(false),
+  checkInAt: timestamp('check_in_at'),
+});
