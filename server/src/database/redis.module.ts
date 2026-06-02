@@ -9,7 +9,7 @@ import Redis from 'ioredis';
       provide: 'REDIS_CLIENT',
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        return new Redis(configService.get<string>('REDIS_URL'));
+        return new Redis(configService.getOrThrow<string>('REDIS_URL'));
       },
     },
   ],

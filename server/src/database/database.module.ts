@@ -11,11 +11,14 @@ import * as schema from './index';
       provide: 'DRIZZLE_DB',
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const Pool = postgres(configService.get<string>('DATABASE_URL'), {
-          max: 50,
-          idle_timeout: 10,
-          connect_timeout: 10,
-        });
+        const Pool = postgres(
+          configService.getOrThrow<string>('DATABASE_URL'),
+          {
+            max: 50,
+            idle_timeout: 10,
+            connect_timeout: 10,
+          },
+        );
         return drizzle(Pool, { schema });
       },
     },
