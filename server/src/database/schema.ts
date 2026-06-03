@@ -57,7 +57,9 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).unique().notNull(),
   role: userRoleEnum('role').notNull().default('fan'),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  tokenVersion: integer('token_version').default(1).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
   deletedAt: timestamp('deleted_at'),
 });
 
@@ -69,8 +71,8 @@ export const organizerAccounts = pgTable('organizer_accounts', {
   businessName: varchar('business_name', { length: 255 }).notNull(),
   businessRegistrationNumber: varchar('business_registration_number', {
     length: 100,
-  }),
-  taxId: varchar('tax_id', { length: 100 }),
+  }).notNull(),
+  taxId: varchar('tax_id', { length: 100 }).notNull(),
   approvalStatus: approvalStatusEnum('approval_status').default('pending'),
   approvedAt: timestamp('approved_at'),
 });
