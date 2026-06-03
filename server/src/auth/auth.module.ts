@@ -9,6 +9,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UsersModule } from '../users/users.module';
 import { OrganizerModule } from '../organizer/organizer.module';
 import { RedisModule } from '../database/redis.module';
+import type { StringValue } from 'ms';
 
 @Module({
   imports: [
@@ -19,9 +20,11 @@ import { RedisModule } from '../database/redis.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+        secret: config.getOrThrow<string>('JWT_ACCESS_TOKEN_SECRET'),
         signOptions: {
-          expiresIn: config.getOrThrow<string>('JWT_ACCESS_EXPIRY'),
+          expiresIn: config.getOrThrow<string>(
+            'JWT_ACCESS_EXPIRY',
+          ) as StringValue,
         },
       }),
     }),
