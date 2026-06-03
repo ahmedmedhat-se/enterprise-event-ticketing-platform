@@ -16,11 +16,12 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // see if route is marked as public
+    // see if route is marked as public --ai
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
+    // no validation needed, public route
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest();
