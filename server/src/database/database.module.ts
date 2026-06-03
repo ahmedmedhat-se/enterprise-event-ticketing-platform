@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './index';
+import { Database } from './database.types';
 
 @Global()
 @Module({
@@ -10,7 +11,7 @@ import * as schema from './index';
     {
       provide: 'DRIZZLE_DB',
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
+      useFactory: (configService: ConfigService): Database => {
         const Pool = postgres(
           configService.getOrThrow<string>('DATABASE_URL'),
           {
