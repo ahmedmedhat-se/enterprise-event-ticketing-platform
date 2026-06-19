@@ -169,6 +169,30 @@ export class AuthService {
     );
   }
 
+  async logout(userId: string, refreshToken: string): Promise<void> {
+    const tokenData = await this.redisService.getJson<{
+      userId: string;
+      familyId: string;
+    }>(`rt:${refreshToken}`);
+
+    if (!tokenData) {
+      return;
+    }
+
+    if (tokenData.userId !== userId) {
+      this.logger.warn(
+        `User ${userId} tried to delete a token belonging to ${tokenData.userId}`,
+      );
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // Remove the current token
+    await this.redisService.del(`rt:${refreshToken}`);
+
+    // remove the family metadata
+    await this.redisService.del(`rt_family:${tokenData.familyId}`);
+  }
+
   // ==================== PRIVATE HELPERS ====================
 
   private async createTokenPair(userId: string) {

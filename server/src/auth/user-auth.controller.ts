@@ -10,6 +10,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthService } from './auth.service';
 import { FanSignupDto, FanLoginDto } from './dto/auth.dto';
 import { Public } from '../common/decorators/public.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 // make cookie not accessible by js
 const COOKIE_OPTIONS = {
@@ -74,5 +75,19 @@ export class UserAuthController {
     });
 
     return { accessToken: result.accessToken };
+  }
+
+  @Post('logout')
+  async logout(
+    @CurrentUser('sub') userId: string,
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) response: FastifyReply,
+  ) {
+    const refreshToken = request.cookies['refresh_token'];
+    if (refreshToken) {
+      await this.authService.logout(userId, refreshToken);
+    }
+    response.clearCookie('refresh_token', { path: '/' });
+    return { message: 'Logged out successfully' };
   }
 }
