@@ -10,6 +10,7 @@ import { UsersModule } from '../users/users.module';
 import { OrganizerModule } from '../organizer/organizer.module';
 import { RedisModule } from '../database/redis.module';
 import type { StringValue } from 'ms';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -35,6 +36,10 @@ import type { StringValue } from 'ms';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
   exports: [AuthService, JwtModule],
