@@ -7,6 +7,7 @@ import { RedisModule } from './database/redis.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { OrganizerModule } from './organizer/organizer.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { OrganizerModule } from './organizer/organizer.module';
     UsersModule,
     AuthModule,
     OrganizerModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
