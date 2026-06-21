@@ -12,6 +12,16 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export class SeatMapRowDto {
+  @IsString()
+  @MaxLength(10)
+  label: string;
+
+  @IsNumber()
+  @Min(1)
+  seats: number;
+}
+
 export class PricingTierDto {
   @IsString()
   @MaxLength(100)
@@ -21,9 +31,10 @@ export class PricingTierDto {
   @Min(0)
   price: number;
 
+  @IsOptional()
   @IsNumber()
   @Min(1)
-  seatsCount: number;
+  seatsCount?: number;
 
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -38,6 +49,11 @@ export class PricingTierDto {
   @IsNumber()
   @Min(1)
   maxPerOrder?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  rows?: string[];
 }
 
 export class CreateEventDto {
@@ -82,4 +98,10 @@ export class CreateEventDto {
   @Type(() => PricingTierDto)
   @ArrayMinSize(1)
   pricingTiers: PricingTierDto[];
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SeatMapRowDto)
+  @IsArray()
+  seatMap?: SeatMapRowDto[]; // custom seat layout (only for seated events)
 }
