@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { users, organizerAccounts } from '../database/schema';
-import type { Database } from 'src/database/database.types';
+import type { Database } from 'src/types/database.types';
 
 @Injectable()
 export class OrganizerService {

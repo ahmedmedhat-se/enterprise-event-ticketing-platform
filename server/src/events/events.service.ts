@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { eq, and, sql, gte, lte, inArray } from 'drizzle-orm';
 import * as schema from '../database/';
-import type { Database } from '../database/database.types';
+import type { Database } from 'src/types/database.types';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { ListEventsDto } from './dto/list-events.dto';

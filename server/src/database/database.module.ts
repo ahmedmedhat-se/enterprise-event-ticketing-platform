@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './index';
-import { Database } from './database.types';
+import type { Database } from 'src/types/database.types';
 
 @Global()
 @Module({
