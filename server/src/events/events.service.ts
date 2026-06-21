@@ -6,17 +6,8 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, or, ilike, gte, lte, sql, SQL } from 'drizzle-orm';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../database/schema';
-import {
-  events,
-  pricingTiers,
-  seats,
-  bookings,
-  tickets,
-  waitlist,
-} from '../database/schema';
+import { eq, and, sql, gte, lte } from 'drizzle-orm';
+import * as schema from '../database/';
 import type { Database } from '../database/database.types';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -29,7 +20,6 @@ export class EventsService {
   constructor(@Inject('DRIZZLE_DB') private readonly db: Database) {}
 
   async createEvent(organizerId: string, dto: CreateEventDto) {
-    // 1. Validate organizer eligibility
     const organizer = await this.getOrganizerProfile(organizerId);
     if (!organizer) {
       throw new NotFoundException('Organizer account not found');
@@ -40,7 +30,6 @@ export class EventsService {
       );
     }
 
-    // 2. Validate event date logic
     const salesStart = new Date(dto.salesStartAt);
     const eventDate = new Date(dto.date);
     const salesEnd = dto.salesEndAt ? new Date(dto.salesEndAt) : null;
@@ -56,10 +45,9 @@ export class EventsService {
       );
     }
 
-    // 3. For seated events, totalSeats will be computed from tiers; for GA, totalCapacity required
     if (dto.eventType === 'general_admission' && !dto.totalCapacity) {
       throw new BadRequestException(
-        'total Capacity is required for general admission events.',
+        'totalCapacity is required for general admission events.',
       );
     }
 
@@ -69,9 +57,8 @@ export class EventsService {
     );
 
     return this.db.transaction(async (tx) => {
-      // Insert event
       const [event] = await tx
-        .insert(events)
+        .insert(schema.events)
         .values({
           organizerId,
           name: dto.name,
@@ -88,10 +75,13 @@ export class EventsService {
         })
         .returning();
 
-      // Insert pricing tiers and (for seated) generate seats
+      // Track seat row/offset across all tiers to avoid duplicates
+      let currentRow = 'A';
+      let currentOffset = 0; // 0‑based index inside the row
+
       for (const tierDto of dto.pricingTiers) {
         const [tier] = await tx
-          .insert(pricingTiers)
+          .insert(schema.pricingTiers)
           .values({
             eventId: event.id,
             tierName: tierDto.tierName,
@@ -102,11 +92,20 @@ export class EventsService {
               ? new Date(tierDto.earlyBirdExpiration)
               : null,
             maxPerOrder: tierDto.maxPerOrder ?? null,
-          })
+          } as any)
           .returning();
 
         if (dto.eventType === 'seated') {
-          await this.generateSeats(tx, event.id, tier.id, tierDto.seatsCount);
+          const next = await this.generateSeats(
+            tx,
+            event.id,
+            tier.id,
+            tierDto.seatsCount,
+            currentRow,
+            currentOffset,
+          );
+          currentRow = next.row;
+          currentOffset = next.offset;
         }
       }
 
@@ -126,7 +125,6 @@ export class EventsService {
       throw new ForbiddenException('Your organizer account is not approved.');
     }
 
-    // Validate new dates if provided
     if (dto.date && dto.salesStartAt) {
       const salesStart = new Date(dto.salesStartAt);
       const eventDate = new Date(dto.date);
@@ -147,12 +145,11 @@ export class EventsService {
       }
     }
 
-    // For now, we do not allow changing eventType or tiers via update (complex)
     if (dto.eventType && dto.eventType !== event.eventType) {
       throw new BadRequestException('Cannot change event type after creation.');
     }
 
-    const updatedFields: Partial<typeof events.$inferInsert> = {};
+    const updatedFields: Partial<typeof schema.events.$inferInsert> = {};
 
     if (dto.name !== undefined) updatedFields.name = dto.name;
     if (dto.description !== undefined)
@@ -167,9 +164,9 @@ export class EventsService {
 
     if (Object.keys(updatedFields).length > 0) {
       await this.db
-        .update(events)
+        .update(schema.events)
         .set(updatedFields)
-        .where(eq(events.id, eventId));
+        .where(eq(schema.events.id, eventId));
       this.logger.log(`Event ${eventId} updated`);
     }
 
@@ -183,13 +180,20 @@ export class EventsService {
     }
 
     await this.db.transaction(async (tx) => {
-      // Delete related entities in correct order to respect foreign keys
-      await tx.delete(tickets).where(eq(tickets.eventId, eventId));
-      await tx.delete(waitlist).where(eq(waitlist.eventId, eventId));
-      await tx.delete(bookings).where(eq(bookings.eventId, eventId));
-      await tx.delete(seats).where(eq(seats.eventId, eventId));
-      await tx.delete(pricingTiers).where(eq(pricingTiers.eventId, eventId));
-      await tx.delete(events).where(eq(events.id, eventId));
+      await tx
+        .delete(schema.tickets)
+        .where(eq(schema.tickets.eventId, eventId));
+      await tx
+        .delete(schema.waitlist)
+        .where(eq(schema.waitlist.eventId, eventId));
+      await tx
+        .delete(schema.bookings)
+        .where(eq(schema.bookings.eventId, eventId));
+      await tx.delete(schema.seats).where(eq(schema.seats.eventId, eventId));
+      await tx
+        .delete(schema.pricingTiers)
+        .where(eq(schema.pricingTiers.eventId, eventId));
+      await tx.delete(schema.events).where(eq(schema.events.id, eventId));
     });
 
     this.logger.log(`Event ${eventId} deleted by organizer ${organizerId}`);
@@ -197,10 +201,8 @@ export class EventsService {
 
   async getOrganizerEvents(organizerId: string) {
     return this.db.query.events.findMany({
-      where: eq(events.organizerId, organizerId),
-      with: {
-        pricingTiers: true,
-      },
+      where: eq(schema.events.organizerId, organizerId),
+      with: { pricingTiers: true },
       orderBy: (events, { desc }) => [desc(events.createdAt)],
     });
   }
@@ -209,12 +211,67 @@ export class EventsService {
     return this.findEventByIdOrFail(eventId);
   }
 
-  async findEventByIdOrFail(eventId: string) {
-    const event = await this.db.query.events.findFirst({
-      where: eq(events.id, eventId),
-      with: {
-        pricingTiers: true,
+  async getPublicEvents(dto: ListEventsDto) {
+    const conditions: ReturnType<typeof sql>[] = [];
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 10;
+
+    if (dto.search) {
+      conditions.push(
+        sql`(${schema.events.name} ILIKE ${`%${dto.search}%`} OR ${schema.events.description} ILIKE ${`%${dto.search}%`})`,
+      );
+    }
+    if (dto.city) {
+      conditions.push(sql`${schema.events.city} ILIKE ${`%${dto.city}%`}`);
+    }
+    if (dto.country) {
+      conditions.push(
+        sql`${schema.events.country} ILIKE ${`%${dto.country}%`}`,
+      );
+    }
+    if (dto.eventType) {
+      conditions.push(eq(schema.events.eventType, dto.eventType));
+    }
+    if (dto.dateFrom) {
+      conditions.push(gte(schema.events.date, new Date(dto.dateFrom)));
+    }
+    if (dto.dateTo) {
+      conditions.push(lte(schema.events.date, new Date(dto.dateTo)));
+    }
+
+    const offset = (page - 1) * limit;
+
+    const [rows, total] = await Promise.all([
+      this.db.query.events.findMany({
+        where: conditions.length > 0 ? and(...conditions) : undefined,
+        with: { pricingTiers: true },
+        orderBy: (events, { asc }) => [asc(events.date)],
+        limit,
+        offset,
+      }),
+      this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.events)
+        .where(conditions.length > 0 ? and(...conditions) : undefined),
+    ]);
+
+    return {
+      data: rows,
+      meta: {
+        page,
+        limit,
+        total: Number(total[0].count),
+        totalPages: Math.ceil(Number(total[0].count) / limit),
       },
+    };
+  }
+
+  // ── Private helpers ──
+
+  private async findEventByIdOrFail(eventId: string) {
+    const event = await this.db.query.events.findFirst({
+      where: eq(schema.events.id, eventId),
+      with: { pricingTiers: true },
     });
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -222,36 +279,38 @@ export class EventsService {
     return event;
   }
 
-  // ── private helpers ──
-
   private async getOrganizerProfile(userId: string) {
     const result = await this.db.query.users.findFirst({
       where: and(
         eq(schema.users.id, userId),
         eq(schema.users.role, 'organizer'),
       ),
-      with: {
-        organizerAccount: true,
-      },
+      with: { organizerAccount: true },
     });
     return result?.organizerAccount ?? null;
   }
 
+  /**
+   * Generate seats for a tier, continuing from the given row and offset.
+   * Returns the next row and offset after generation.
+   */
   private async generateSeats(
-    tx: PostgresJsDatabase<typeof schema>,
+    tx: any,
     eventId: string,
     tierId: string,
     seatCount: number,
-  ) {
-    const SEATS_PER_ROW = 20; // default, could be configurable
-    let currentRowCode = 'A'.charCodeAt(0);
-    let seatInRow = 0;
+    startRow: string,
+    startOffset: number,
+  ): Promise<{ row: string; offset: number }> {
+    const SEATS_PER_ROW = 20;
+    let rowChar = startRow.charCodeAt(0);
+    let offset = startOffset;
 
     for (let i = 0; i < seatCount; i++) {
-      const row = String.fromCharCode(currentRowCode);
-      const number = seatInRow + 1;
+      const row = String.fromCharCode(rowChar);
+      const number = offset + 1; // 1‑based seat number
 
-      await tx.insert(seats).values({
+      await tx.insert(schema.seats).values({
         eventId,
         tierId,
         seatRow: row,
@@ -259,72 +318,13 @@ export class EventsService {
         status: 'available',
       });
 
-      seatInRow++;
-      if (seatInRow >= SEATS_PER_ROW) {
-        currentRowCode++;
-        seatInRow = 0;
+      offset++;
+      if (offset >= SEATS_PER_ROW) {
+        rowChar++;
+        offset = 0;
       }
     }
-  }
-  async getPublicEvents(dto: ListEventsDto) {
-    const conditions: SQL[] = [];
 
-    if (dto.search) {
-      // search in name and description
-      conditions.push(
-        or(
-          ilike(events.name, `%${dto.search}%`),
-          ilike(events.description ?? sql`''`, `%${dto.search}%`),
-        ),
-      );
-    }
-
-    if (dto.city) {
-      conditions.push(ilike(events.city ?? sql`''`, `%${dto.city}%`));
-    }
-
-    if (dto.country) {
-      conditions.push(ilike(events.country ?? sql`''`, `%${dto.country}%`));
-    }
-
-    if (dto.eventType) {
-      conditions.push(eq(events.eventType, dto.eventType));
-    }
-
-    if (dto.dateFrom) {
-      conditions.push(gte(events.date, new Date(dto.dateFrom)));
-    }
-
-    if (dto.dateTo) {
-      conditions.push(lte(events.date, new Date(dto.dateTo)));
-    }
-
-    const offset = (dto.page - 1) * dto.limit;
-
-    const [rows, total] = await Promise.all([
-      this.db.query.events.findMany({
-        where: conditions.length > 0 ? and(...conditions) : undefined,
-        with: {
-          pricingTiers: true,
-        },
-        orderBy: (events, { asc }) => [asc(events.date)],
-        limit: dto.limit,
-        offset,
-      }),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(events)
-        .where(conditions.length > 0 ? and(...conditions) : undefined),
-    ]);
-
-    return {
-      data: rows,
-      meta: {
-        page: dto.page,
-        limit: dto.limit,
-        total: Number(total[0].count),
-        totalPages: Math.ceil(Number(total[0].count) / dto.limit),
-      },
-    };
+    return { row: String.fromCharCode(rowChar), offset };
   }
 }
