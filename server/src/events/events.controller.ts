@@ -63,6 +63,5 @@ export class EventsController {
     @CurrentUser() user: AuthUser,
   ) {
     await this.eventsService.deleteEvent(id, user.sub);
-    return { message: 'Event deleted successfully' };
   }
 }

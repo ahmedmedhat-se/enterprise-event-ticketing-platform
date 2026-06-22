@@ -185,6 +185,7 @@ export class EventsService {
     });
 
     this.logger.log(`Event ${eventId} deleted by organizer ${organizerId}`);
+    return { message: 'Event deleted successfully' };
   }
 
   // ── LIST ORGANIZER EVENTS ───────────────────────────────────
