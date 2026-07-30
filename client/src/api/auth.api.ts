@@ -1,5 +1,5 @@
 import apiClient from '../shared/api/client';
-import type { AuthResponse, LoginCredentials, SignupData } from '../types/auth.types';
+import type { AuthResponse, LoginCredentials, SignupData, OrganizerSignupData } from '../types/auth.types';
 
 export async function loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
   const { data } = await apiClient.post<AuthResponse>('/user/login', credentials);
@@ -16,7 +16,7 @@ export async function signupUser(data: SignupData): Promise<AuthResponse> {
   return res;
 }
 
-export async function signupOrganizer(data: SignupData): Promise<AuthResponse> {
+export async function signupOrganizer(data: OrganizerSignupData): Promise<AuthResponse> {
   const { data: res } = await apiClient.post<AuthResponse>('/organizer/signup', data);
   return res;
 }
@@ -32,4 +32,14 @@ export async function logoutUser(): Promise<void> {
 
 export async function logoutOrganizer(): Promise<void> {
   await apiClient.post('/organizer/logout');
+}
+
+export async function getMe(): Promise<{ user: import('../types/auth.types').AuthUser }> {
+  const { data } = await apiClient.get('/user/me');
+  return data;
+}
+
+export async function getOrganizerMe(): Promise<{ user: import('../types/auth.types').AuthUser }> {
+  const { data } = await apiClient.get('/organizer/me');
+  return data;
 }
