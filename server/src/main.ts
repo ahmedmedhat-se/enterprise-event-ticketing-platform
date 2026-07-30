@@ -3,11 +3,12 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { WsAdapter } from '@nestjs/platform-ws';
 import { AppModule } from './app.module';
 import cookieParser from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { WsAdapter } from './common/adapters/ws.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -15,29 +16,24 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
-  // Register WebSocket adapter using native WebSockets (ws library)
-  // WsAdapter attaches to the underlying Node.js HTTP server created by Fastify
-  app.useWebSocketAdapter(new WsAdapter(app));
+  const configService = app.get(ConfigService);
+  const logger = new Logger('Bootstrap');
 
-  await app.register(cookieParser);
+  const frontendUrl = configService.get<string>('FRONTEND_URL');
 
-  const rawOrigins = process.env.CORS_ALLOWED_ORIGINS;
-
-  if (!rawOrigins) {
-    throw new Error(
-      'Provide a comma-separated list of allowed frontend origins.',
-    );
+  if (!frontendUrl) {
+    logger.error('FRONTEND_URL environment variable is not set.');
+    process.exit(1);
   }
 
-  const allowedOrigins = (rawOrigins || 'http://localhost:5173')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean);
+  app.useWebSocketAdapter(new WsAdapter(frontendUrl));
+
+  await app.register(cookieParser);
 
   await app.register(fastifyCors, {
     origin: (origin, cb) => {
       if (!origin) return cb(null, true);
-      if (allowedOrigins.includes(origin)) return cb(null, true);
+      if (origin === frontendUrl) return cb(null, true);
       cb(new Error(`Origin '${origin}' not allowed by CORS`), false);
     },
     credentials: true,
@@ -53,6 +49,8 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(process.env.PORT ?? 4000);
+  const port = configService.get<number>('PORT', 4000);
+  await app.listen(port);
+  logger.log(`Server running on port ${port}`);
 }
 bootstrap();
