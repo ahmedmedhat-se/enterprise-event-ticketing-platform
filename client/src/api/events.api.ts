@@ -1,9 +1,9 @@
-import apiClient from '../../../shared/api/client';
+import apiClient from '../shared/api/client';
 import type {
   Event,
   ListEventsParams,
   PaginatedResponse,
-} from '../../../shared/api/types';
+} from '../shared/api/types';
 
 export async function getEvents(params?: ListEventsParams): Promise<PaginatedResponse<Event>> {
   const res = await apiClient.get<PaginatedResponse<Event>>('/events', { params });
