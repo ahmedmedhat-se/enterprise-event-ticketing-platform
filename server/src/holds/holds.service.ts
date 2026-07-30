@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { eq, and } from 'drizzle-orm';
-import Redis from 'ioredis';
 import * as schema from '../database/';
 import type { Database } from '../types/database.types';
+import { RedisService } from '../database/redis.service';
 import { HoldsGateway } from './holds.gateway';
 
 const HOLD_KEY_PREFIX = 'hold:seat:';
@@ -26,7 +26,7 @@ export class SeatHoldService {
 
   constructor(
     @Inject('DRIZZLE_DB') private readonly db: Database,
-    @Inject('HOLDS_REDIS_CLIENT') private readonly redisClient: Redis,
+    private readonly redisService: RedisService,
     private readonly configService: ConfigService,
     private readonly holdsGateway: HoldsGateway,
   ) {
@@ -66,17 +66,13 @@ export class SeatHoldService {
 
     // 2. Atomically set Redis hold key using SET NX (set if not exists)
     const holdKey = this.getHoldKey(seatId);
-
-    // ioredis supports: set(key, value, 'PX', ttl, 'NX') for atomic SET NX with expiry
-    const keySet = await this.redisClient.set(
+    const keySet = await this.redisService.setNx(
       holdKey,
       userId,
-      'PX',
       this.holdTtlMs,
-      'NX',
     );
 
-    if (keySet !== 'OK') {
+    if (!keySet) {
       // Key already exists – seat is held by someone else
       throw new BadRequestException('Seat is already held by another user');
     }
@@ -103,7 +99,7 @@ export class SeatHoldService {
       });
     } catch (err) {
       // DB transaction failed – roll back the Redis hold
-      await this.redisClient.del(holdKey);
+      await this.redisService.del(holdKey);
       throw err;
     }
 
@@ -120,10 +116,6 @@ export class SeatHoldService {
   /**
    * Release a held seat (mark available in both Redis and DB).
    *
-   * When called from the HTTP controller, `requestingUserId` should be set
-   * to verify that the caller actually owns the hold.  When called from the
-   * cron service (cleanup of stale/expired holds), omit the argument.
-   *
    * Queries the seat's eventId from DB for broadcasting.
    */
   async releaseHold(seatId: string, requestingUserId?: string): Promise<void> {
@@ -131,7 +123,7 @@ export class SeatHoldService {
 
     // 1. Verify ownership if a user ID was provided
     if (requestingUserId) {
-      const currentHolder = await this.redisClient.get(holdKey);
+      const currentHolder = await this.redisService.get(holdKey);
       if (currentHolder && currentHolder !== requestingUserId) {
         throw new ForbiddenException(
           'You do not hold this seat; cannot release it',
@@ -147,7 +139,7 @@ export class SeatHoldService {
       .limit(1);
 
     // 3. Remove Redis key
-    await this.redisClient.del(holdKey);
+    await this.redisService.del(holdKey);
 
     // 4. Update DB – only if currently held
     await this.db
@@ -173,7 +165,7 @@ export class SeatHoldService {
   async extendHold(seatId: string, userId: string): Promise<void> {
     const holdKey = this.getHoldKey(seatId);
 
-    const currentHolder = await this.redisClient.get(holdKey);
+    const currentHolder = await this.redisService.get(holdKey);
     if (!currentHolder) {
       throw new BadRequestException('No active hold found for this seat');
     }
@@ -184,7 +176,7 @@ export class SeatHoldService {
     }
 
     // Re-set with new TTL
-    await this.redisClient.pexpire(holdKey, this.holdTtlMs);
+    await this.redisService.pexpire(holdKey, this.holdTtlMs);
     this.logger.log(`Hold extended for seat ${seatId} by user ${userId}`);
   }
 
@@ -193,7 +185,7 @@ export class SeatHoldService {
    * Used by the cron service.
    */
   async isSeatHeldInRedis(seatId: string): Promise<boolean> {
-    const value = await this.redisClient.get(this.getHoldKey(seatId));
+    const value = await this.redisService.get(this.getHoldKey(seatId));
     return value !== null;
   }
 

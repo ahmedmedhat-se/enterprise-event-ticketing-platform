@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
 import { DatabaseModule } from '../database/database.module';
+import { RedisModule } from '../database/redis.module';
 import { SeatHoldService } from './holds.service';
 import { HoldsGateway } from './holds.gateway';
 import { HoldsCronService } from './holds-cron.service';
@@ -12,6 +12,7 @@ import { SeatHoldController } from './holds.controller';
 @Module({
   imports: [
     DatabaseModule,
+    RedisModule,
     ScheduleModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -25,21 +26,7 @@ import { SeatHoldController } from './holds.controller';
     }),
   ],
   controllers: [SeatHoldController],
-  providers: [
-    SeatHoldService,
-    HoldsGateway,
-    HoldsCronService,
-    {
-      provide: 'HOLDS_REDIS_CLIENT',
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        return new Redis(config.getOrThrow<string>('REDIS_URL'), {
-          enableReadyCheck: true,
-          maxRetriesPerRequest: 3,
-        });
-      },
-    },
-  ],
+  providers: [SeatHoldService, HoldsGateway, HoldsCronService],
   exports: [SeatHoldService, HoldsGateway],
 })
 export class HoldsModule {}

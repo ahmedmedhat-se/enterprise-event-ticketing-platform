@@ -19,6 +19,20 @@ export class RedisService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Returns true when the key was set (caller won the lock), false otherwise.
+   * Used by the seat-hold flow to guarantee exactly one holder per seat.
+   */
+  async setNx(key: string, value: string, ttlMs: number): Promise<boolean> {
+    const result = await this.client.set(key, value, 'PX', ttlMs, 'NX');
+    return result === 'OK';
+  }
+
+  /** Update the TTL of an existing key (milliseconds). */
+  async pexpire(key: string, ttlMs: number): Promise<void> {
+    await this.client.pexpire(key, ttlMs);
+  }
+
   async del(key: string | string[]): Promise<void> {
     if (Array.isArray(key)) {
       await this.client.del(...key);
