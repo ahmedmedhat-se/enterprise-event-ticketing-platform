@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/auth.store';
 import * as authApi from '../api/auth.api';
 import { extractErrorMessage } from '../shared/api/client';
-import type { LoginCredentials, SignupData } from '../types/auth.types';
+import type { LoginCredentials, SignupData, OrganizerSignupData } from '../types/auth.types';
 
 export function useLogin(role: 'fan' | 'organizer') {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -29,8 +29,8 @@ export function useSignup(role: 'fan' | 'organizer') {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: (data: SignupData) =>
-      role === 'fan' ? authApi.signupUser(data) : authApi.signupOrganizer(data),
+    mutationFn: (data: SignupData | OrganizerSignupData) =>
+      role === 'fan' ? authApi.signupUser(data as SignupData) : authApi.signupOrganizer(data as OrganizerSignupData),
     onSuccess: (data) => {
       setAuth(data.user, data.accessToken);
       toast.success('Account created successfully!');

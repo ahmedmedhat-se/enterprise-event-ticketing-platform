@@ -17,6 +17,15 @@ export interface SignupData {
   password: string;
 }
 
+export interface OrganizerSignupData {
+  name: string;
+  email: string;
+  password: string;
+  businessName: string;
+  businessRegistrationNumber: string;
+  taxId: string;
+}
+
 export interface AuthResponse {
   user: AuthUser;
   accessToken: string;
