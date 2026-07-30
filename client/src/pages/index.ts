@@ -1,3 +1,9 @@
 export { HomePage } from './HomePage';
 export { EventDetailPage } from './EventDetailPage';
 export { NotFoundPage } from './NotFoundPage';
+export { LoginPage } from './auth/LoginPage';
+export { OrganizerLoginPage } from './auth/OrganizerLoginPage';
+export { SignupPage } from './auth/SignupPage';
+export { OrganizerSignupPage } from './auth/OrganizerSignupPage';
+export { FanDashboardPage } from './dashboard/FanDashboardPage';
+export { OrganizerDashboardPage } from './dashboard/OrganizerDashboardPage';

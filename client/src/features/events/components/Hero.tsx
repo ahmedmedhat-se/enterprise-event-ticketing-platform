@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { Event, Seat, SeatLayoutRow } from '../../../shared/api/types';
 import { SeatMap } from './SeatMap';
 
@@ -185,19 +186,19 @@ export function Hero() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <a
-              href="#events"
+            <Link
+              to="/#events"
               className="inline-flex items-center gap-2 rounded-xl bg-ink-950 px-5 py-3 text-[15px] font-medium text-white transition-transform hover:-translate-y-0.5"
             >
               Browse events
               <ArrowRight className="h-4 w-4" />
-            </a>
-            <a
-              href="#how"
+            </Link>
+            <Link
+              to="/login"
               className="inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-5 py-3 text-[15px] font-medium text-ink-800 transition-colors hover:border-ink-300"
             >
-              How it works
-            </a>
+              Sign in
+            </Link>
           </div>
         </div>
 
