@@ -1,111 +1,138 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import 'tailwindcss';
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* =====================================================================
+   EETP — Calm "Ink + Lavender" design system
+   Near-black ink on warm off-white. Brand purple used sparingly as a
+   precise accent (drawn from the project's own logo identity).
+   ===================================================================== */
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  /* Type scale — calm, editorial, generous */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-mono: ui-monospace, 'SF Mono', Consolas, monospace;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  /* Ink (near-black, warm-leaning, not pure zinc) */
+  --color-ink-950: #14121c;
+  --color-ink-900: #1c1a26;
+  --color-ink-800: #2a2735;
+  --color-ink-700: #3a3645;
+  --color-ink-600: #524d5e;
+  --color-ink-500: #6c6678;
+  --color-ink-400: #8e8898;
+  --color-ink-300: #b6b0c0;
+  --color-ink-200: #d9d5de;
+  --color-ink-100: #ece9ef;
+  --color-ink-50: #f5f3f8;
+
+  /* Lavender accent (brand) — used sparingly */
+  --color-lav-700: #6b3fe8;
+  --color-lav-600: #7e44ff;
+  --color-lav-500: #8e3bff;
+  --color-lav-400: #a068ff;
+  --color-lav-300: #c4a3ff;
+  --color-lav-200: #e2d4ff;
+  --color-lav-100: #efe7ff;
+  --color-lav-50: #f7f2ff;
+
+  /* Paper (warm off-white surfaces) */
+  --color-paper: #faf9f7;
+  --color-paper-2: #f3f1ec;
+  --color-paper-3: #e9e6df;
+
+  /* Semantic */
+  --color-bg: var(--color-paper);
+  --color-surface: #ffffff;
+  --color-fg: var(--color-ink-900);
+  --color-fg-muted: var(--color-ink-500);
+  --color-border: #e8e4ec;
+  --color-accent: var(--color-lav-600);
+  --color-accent-fg: #ffffff;
+
+  /* Radius */
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+
+  /* Easing */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-lav-200);
+    color: var(--color-ink-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-ink-950);
+    line-height: 1.1;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  .container-edge {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    .container-edge { padding-inline: 2.5rem; }
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  .animate-rise {
+    animation: rise 0.7s var(--ease-out-soft) both;
   }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+  .animate-rise-2 { animation: rise 0.7s var(--ease-out-soft) 0.08s both; }
+  .animate-rise-3 { animation: rise 0.7s var(--ease-out-soft) 0.16s both; }
+  .animate-rise-4 { animation: rise 0.7s var(--ease-out-soft) 0.24s both; }
+  .animate-pulse-soft {
+    animation: pulse-soft 2.4s ease-in-out infinite;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
 }
