@@ -362,9 +362,9 @@ export class EventsService {
     });
     if (!event) throw new NotFoundException('Event not found');
 
-    // For seated events, attach a lightweight seat map
+    // For seated events, attach the full seat map with seat UUIDs
     if (event.eventType === 'seated') {
-      const { rows, occupied } = await this.getSeatMapSummary(eventId);
+      const { rows, occupied, allSeats } = await this.getSeatMapSummary(eventId);
 
       // Build a map from tierId to tier name/price
       const tierMap = new Map(
@@ -374,24 +374,40 @@ export class EventsService {
         ]),
       );
 
+      // Row layout summary (row label, tier info, total seats in that row)
       const seatLayout = rows.map((r) => ({
         row: r.row,
         seats: r.seatCount,
         ...tierMap.get(r.tierId),
       }));
 
-      const held: string[] = [];
-      const sold: string[] = [];
+      // Seat status keyed by seat UUID (consumed by holds API + WS broadcasts)
+      const seatStatus: Record<string, 'held' | 'booked'> = {};
       for (const s of occupied) {
         const ref = `${s.row}${s.number}`;
-        if (s.status === 'held') held.push(ref);
-        else if (s.status === 'booked') sold.push(ref);
+        const seatId = allSeats.find(
+          (a) => a.seatRow === s.row && a.seatNumber === s.number,
+        )?.id;
+        if (seatId) seatStatus[seatId] = s.status as 'held' | 'booked';
+        // also keep ref for debugging/display
+        void ref;
       }
+
+      // Full seats array with UUIDs — the client uses this to render the grid,
+      // call POST /holds with seatId, and map WS seatId broadcasts to rows.
+      const seats = allSeats.map((s) => ({
+        id: s.id,
+        row: s.seatRow,
+        number: s.seatNumber,
+        tierId: s.tierId,
+        status: s.status,
+      }));
 
       return {
         ...event,
         seatLayout,
-        seatStatus: { held, sold },
+        seats,
+        seatStatus,
       };
     }
 
@@ -438,7 +454,20 @@ export class EventsService {
         ),
       );
 
-    return { rows, occupied };
+    // Query 3: All seats with UUIDs (so the client can call holds/WS by UUID)
+    const allSeats = await this.db
+      .select({
+        id: schema.seats.id,
+        seatRow: schema.seats.seatRow,
+        seatNumber: schema.seats.seatNumber,
+        tierId: schema.seats.tierId,
+        status: schema.seats.status,
+      })
+      .from(schema.seats)
+      .where(eq(schema.seats.eventId, eventId))
+      .orderBy(schema.seats.seatRow, schema.seats.seatNumber);
+
+    return { rows, occupied, allSeats };
   }
 
   // ── CUSTOM SEAT MAP GENERATION ─────────────────────────────
