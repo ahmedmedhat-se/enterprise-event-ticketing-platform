@@ -47,4 +47,14 @@ export class OrganizerService {
       return result;
     });
   }
+
+  async findByUserId(userId: string) {
+    const result = await this.db.query.users.findFirst({
+      where: eq(users.id, userId),
+      with: { organizerAccount: true },
+    });
+
+    if (!result) return null;
+    return result;
+  }
 }

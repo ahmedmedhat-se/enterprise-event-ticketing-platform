@@ -4,6 +4,7 @@ import {
   Body,
   Res,
   Req,
+  Get,
   UnauthorizedException,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -11,6 +12,7 @@ import { AuthService } from './auth.service';
 import { FanSignupDto, FanLoginDto } from './dto/auth.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { UsersService } from '../users/users.service';
 
 // make cookie not accessible by js
 const COOKIE_OPTIONS = {
@@ -22,7 +24,10 @@ const COOKIE_OPTIONS = {
 
 @Controller('user')
 export class UserAuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Public()
   @Post('signup')
@@ -89,5 +94,11 @@ export class UserAuthController {
     }
     response.clearCookie('refresh_token', { path: '/' });
     return { message: 'Logged out successfully' };
+  }
+
+  @Get('me')
+  async getProfile(@CurrentUser('sub') userId: string) {
+    const user = await this.usersService.findById(userId);
+    return { user };
   }
 }
